@@ -8,7 +8,7 @@ app.get("/", (req, res) => {
     })
 })
 app.get("/ping", (req, res) => {
-    res.json({message: "pong......hhh"})
+    res.json({message: "pong......hhh udates"})
 })
 
 const PORT = process.env.PORT || 3000;
