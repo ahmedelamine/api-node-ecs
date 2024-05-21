@@ -1,0 +1,57 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: ${{ secrets.AWS_REGION }}
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        run: |
+          # Define variables
+          IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+          ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+
+          # Build the Docker image
+          docker build -t $IMAGE_URI .
+
+          # Push the Docker image to ECR
+          docker push $IMAGE_URI
+
+          # Output the image URI
+          echo "::set-output name=image_uri::$IMAGE_URI"
+
+      - name: Update ECS task definition
+        id: update-task-def
+        run: |
+          cd $GITHUB_WORKSPACE
+          sed -i 's|<IMAGE_URI>|'"${{ steps.build-image.outputs.image_uri }}"'|g' application_file_.json
+          echo "::set-output name=task-def-file::application_file_.json"
+
+      - name: Deploy to Amazon ECS
+        id: deploy-ecs
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          service: ${{ secrets.ECS_SERVICE }}
+          task-definition: ${{ steps.update-task-def.outputs.task-def-file }}
+          image: ${{ steps.build-image.outputs.image_uri }}
