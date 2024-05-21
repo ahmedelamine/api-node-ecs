@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:058264543977:task-definition/api-node-fargate:1",
+    "family": "api-node-fargate",
     "containerDefinitions": [
         {
             "name": "api-node-app",
@@ -24,37 +24,14 @@
             "systemControls": []
         }
     ],
-    "family": "api-node-fargate",
     "executionRoleArn": "arn:aws:iam::058264543977:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 1,
     "volumes": [],
-    "status": "ACTIVE",
-    "requiresAttributes": [
-        {
-            "name": "com.amazonaws.ecs.capability.ecr-auth"
-        },
-        {
-            "name": "ecs.capability.execution-role-ecr-pull"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
-            "name": "ecs.capability.task-eni"
-        }
-    ],
     "placementConstraints": [],
-    "compatibilities": [
-        "EC2",
-        "FARGATE"
-    ],
     "requiresCompatibilities": [
         "FARGATE"
     ],
     "cpu": "256",
     "memory": "512",
-    "registeredAt": "2024-05-20T10:02:39.545Z",
-    "registeredBy": "arn:aws:iam::058264543977:user/ahmed",
     "tags": []
 }

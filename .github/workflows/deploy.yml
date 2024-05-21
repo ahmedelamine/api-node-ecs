@@ -37,23 +37,17 @@ jobs:
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 
-          echo "::set-output name=image_uri::$IMAGE_URI"
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
       - name: Update ECS task definition
-        id: update-task-def
         run: |
-          cd $GITHUB_WORKSPACE
-          sed -i 's|<IMAGE_URI>|'"${{ steps.build-image.outputs.image_uri }}"'|g' application_file_.json
-          echo "::set-output name=task-def-file::application_file_.json"
+          sed -i 's|<IMAGE_URI>|'"${IMAGE_URI}"'|g' application_file_.json
+          echo "TASK_DEF_FILE=application_file_.json" >> $GITHUB_ENV
 
       - name: Deploy to Amazon ECS
-        id: deploy-ecs
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ secrets.AWS_REGION }}
-          cluster: ${{ secrets.ECS_CLUSTER }}
+          task-definition: ${{ env.TASK_DEF_FILE }}
           service: ${{ secrets.ECS_SERVICE }}
-          task-definition: ${{ steps.update-task-def.outputs.task-def-file }}
-          image: ${{ steps.build-image.outputs.image_uri }}
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true
