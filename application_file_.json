@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "name": "api-node-app",
-            "image": "058264543977.dkr.ecr.us-east-1.amazonaws.com/api-node:latest",
+            "image": "<IMAGE_URI>",
             "cpu": 0,
             "portMappings": [
                 {
