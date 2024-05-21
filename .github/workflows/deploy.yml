@@ -17,7 +17,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
         with:
-          region: ${{ secrets.AWS_REGION }}
+          region: us-east-1
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -26,7 +26,7 @@ jobs:
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)
           ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
           AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
           # Build the Docker image
           docker build -t $IMAGE_URI .
@@ -50,7 +50,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ secrets.AWS_REGION }}
+          region: us-east-1
           cluster: ${{ secrets.ECS_CLUSTER }}
           service: ${{ secrets.ECS_SERVICE }}
           task-definition: ${{ steps.update-task-def.outputs.task-def-file }}
