@@ -1,0 +1,54 @@
+# Chat gpt version
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+          ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          IMAGE_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Update ECS task definition
+        run: |
+          sed -i 's|<IMAGE_URI>|'"${IMAGE_URI}"'|g' application_file_.json
+          echo "TASK_DEF_FILE=application_file_.json" >> $GITHUB_ENV
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ env.TASK_DEF_FILE }}
+          service: ${{ secrets.ECS_SERVICE }}
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true

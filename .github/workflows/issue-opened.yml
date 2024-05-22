@@ -1,0 +1,17 @@
+name: Issue Opened
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  issue-task:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Respond to issue
+        run: echo "Thanks for opening an issue!" >> issue-response.txt
